@@ -1,6 +1,10 @@
 import function
 import PySimpleGUI as sg
+import time
 
+sg.theme("DarkAmber")
+
+clock = sg.Text('', key='clock')
 label = sg.Text("Type in a todo")
 input_box = sg.InputText(tooltip="enter todo", key="todo")
 add_button = sg.Button("Add")
@@ -12,16 +16,17 @@ exit_Button = sg.Button("Exit")
 
 
 window = sg.Window("My Todo App",
-                   layout=[[label], [input_box, add_button],
+                   layout=[[clock],
+                           [label],
+                           [input_box, add_button],
                            [list_box, edit_button, remove_buton],
                            [exit_Button]],
                    font=('Helvetica', 16))
 
 while True:
-    event, values = window.read()
-    print(1, event)
-    print(2, values)
-    print(3, values['todos'])
+    event, values = window.read(timeout=200)
+    window['clock'].update(value=time.strftime("%d %b %y  %H:%M:%S"))
+
     match event:
         case "Add":
             todos = function.get_todos()
@@ -31,23 +36,30 @@ while True:
             window['todos'].update(values=todos)
 
         case "Edit":
-            todo_to_edit = values['todos'][0]
+            try:
+                todo_to_edit = values['todos'][0]
 
-            new_todo = values['todo']
+                new_todo = values['todo']
 
-            todos = function.get_todos()
-            index = todos.index(todo_to_edit)
-            todos[index] = new_todo
-            function.write_todos(todos)
-            window['todos'].update(values=todos)
+                todos = function.get_todos()
+                index = todos.index(todo_to_edit)
+                todos[index] = new_todo
+                function.write_todos(todos)
+                window['todos'].update(values=todos)
+            except IndexError:
+                sg.popup("select a value")
+
 
         case "Remove":
-            todo_to_remove = values['todos'][0]
-            todos = function.get_todos()
-            todos.remove(todo_to_remove)
-            function.write_todos(todos)
-            window['todos'].update(values=todos)
-            window['todo'].update(value="")
+            try:
+                todo_to_remove = values['todos'][0]
+                todos = function.get_todos()
+                todos.remove(todo_to_remove)
+                function.write_todos(todos)
+                window['todos'].update(values=todos)
+                window['todo'].update(value="")
+            except IndexError:
+                print("select a value")
 
         case "Exit":
             break
